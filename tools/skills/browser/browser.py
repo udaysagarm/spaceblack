@@ -1,7 +1,7 @@
 """
-browser.py — Space Black autonomous browser (OpenClaw architecture, v8)
+browser.py — Space Black autonomous browser (v8)
 
-Architecture (mirrors OpenClaw):
+Architecture:
   1. Semantic Snapshots  — CDP Accessibility.getFullAXTree → structured text with
      both readable content AND numbered interactive refs.  The agent sees the page
      like a screen-reader: headings, paragraphs, labels, plus [ref=N] on every
@@ -329,7 +329,7 @@ def _build_snapshot(nodes: List[dict]) -> Tuple[Dict[int, _Elem], str]:
       2. A human-readable snapshot string showing page structure
 
     The snapshot includes BOTH content (headings, text, labels) and
-    interactive elements with [ref=N] markers — mirroring OpenClaw's
+    interactive elements with [ref=N] markers for spatial awareness
     approach of giving the agent full page comprehension.
     """
     registry: Dict[int, _Elem] = {}
@@ -644,7 +644,7 @@ class BrowserSession:
 
 async def _smart_wait(page: Page, timeout_ms: int = _SMART_WAIT_TIMEOUT) -> None:
     """
-    OpenClaw-style smart wait: try networkidle first, fall back to domcontentloaded,
+    Intelligent smart wait: try networkidle first, fall back to domcontentloaded,
     then a minimal sleep. Never blocks longer than timeout_ms.
     """
     try:
@@ -1330,7 +1330,7 @@ async def _dispatch(action: str, page: Page, cdp: CDPSession, **kw) -> str:
         snap = await _take_snapshot(page, cdp)
         return f"Waited {duration}s\n\n{snap}"
 
-    # ── WAIT_FOR (OpenClaw power-up) ───────────────────────────────────────
+    # ── WAIT_FOR ──────────────────────────────────────────────────────────
     if action == "wait_for":
         selector = kw.get("selector")
         url = kw.get("url")

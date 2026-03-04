@@ -372,7 +372,7 @@ def run_agent(state: AgentState):
         tools.append(get_current_weather)
 
     if skills_config.get("browser", {}).get("enabled", False):
-        # OpenClaw-style unified browser tool
+        # Space Black native unified browser tool
         tools.append(browser_act)
 
     if skills_config.get("github", {}).get("enabled", False):

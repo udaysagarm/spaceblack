@@ -107,7 +107,7 @@ class SpaceBlackDiscordBot(discord.Client):
             
         history_text = "\n".join(history)
 
-        # 2. OpenClaw Style Intelligent Classifier
+        # 2. Intelligent Intent Classifier
         should_intervene = False
         
         if is_dm or is_mentioned:

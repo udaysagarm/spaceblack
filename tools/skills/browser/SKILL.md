@@ -1,11 +1,11 @@
 ---
 name: Browser Skill
-description: Autonomous web browsing using OpenClaw-style Semantic Snapshots, intelligent waits, and CDP interaction.
+description: Autonomous web browsing using Semantic Snapshots, intelligent waits, and CDP interaction.
 ---
 
-# Browser Skill (OpenClaw Architecture)
+# Browser Skill
 
-This skill gives the agent autonomous control of a real Chromium browser. It uses the same architectural approach as **OpenClaw**: every page is rendered as a **Semantic Snapshot** — a structured text representation with page content AND numbered interactive elements drawn from the browser's Accessibility Tree.
+This skill gives the agent autonomous control of a real Chromium browser. It uses an advanced architectural approach: every page is rendered as a **Semantic Snapshot** — a structured text representation with page content AND numbered interactive elements drawn from the browser's Accessibility Tree.
 
 The agent reads the page like a screen-reader would: headings, paragraphs, labels **and** interactive elements (`[ref=N]`). It acts by reference number — no CSS selectors needed.
 

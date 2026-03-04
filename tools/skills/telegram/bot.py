@@ -107,7 +107,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     CHAT_HISTORY[chat_id].append(f"{user_name}: {user_text}")
     history_text = "\n".join(CHAT_HISTORY[chat_id])
 
-    # 2. OpenClaw Style Intelligent Classifier
+    # 2. Intelligent Intent Classifier
     should_intervene = False
     
     bot_username = context.bot.username
