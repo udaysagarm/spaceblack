@@ -52,6 +52,7 @@ Extend Ghost's capabilities with skills defined in `config.json`:
 - **macOS Control**: Deep integration with Apple Mail, Notes, Reminders, Finder, and Calendar via native AppleScript (macOS only).
 - **Discord & Slack**: Run background bots to manage servers, chat in channels, and access your personal gateway.
 - **GitHub**: Control repositories, issues, branches, and code files directly.
+- **Jira**: Manage tickets, comments, and project states autonomously via native Atlassian APIs.
 - **Stripe & PayPal**: Secure billing, invoices, payouts, and payments gateway.
 - **Telegram**: Chat with Ghost from your phone.
 - **Weather**: Real-time forecasts.

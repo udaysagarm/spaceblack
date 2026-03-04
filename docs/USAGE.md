@@ -54,6 +54,7 @@ See [**Browsing Guide**](./BROWSING.md) for details.
 Ghost can control your local apps and cloud workspace.
 - **macOS Control**: "Read my latest unread Apple Mail" or "Empty my Mac's trash."
 - **Google Workspace**: "Create a Google Calendar event for our meeting tomorrow at 3 PM and email John the agenda."
+- **Jira Integration**: "What's the status of PROJ-42?" or "Create a bug ticket in APP project for the login failure."
 
 ### 5. Task Scheduling
 Tell Ghost to do things in the future.

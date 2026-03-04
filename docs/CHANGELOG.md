@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+-   **Jira Integration**: New API module (`tools/skills/jira`) to autonomously manage Jira tickets, fetch statuses, add comments, and transition issues natively.
 -   **`ghost` CLI**: New unified command — `ghost start` launches the agent with auto-setup on first run. Replaces `./spaceblack onboard` + `./spaceblack start`.
 -   **`ghost update`**: New command to pull latest code and update dependencies.
 -   **`ghost --help` / `ghost --version`**: Full help output with commands, options, examples, and version info.
