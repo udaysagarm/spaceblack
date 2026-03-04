@@ -50,25 +50,25 @@ Ghost can surf the web for you.
 - "Read the documentation for LangGraph and summarize the core concepts."
 See [**Browsing Guide**](./BROWSING.md) for details.
 
-### 4. Native App & Workspace Integrations
+### 3. Native App & Workspace Integrations
 Ghost can control your local apps and cloud workspace.
 - **macOS Control**: "Read my latest unread Apple Mail" or "Empty my Mac's trash."
 - **Google Workspace**: "Create a Google Calendar event for our meeting tomorrow at 3 PM and email John the agenda."
 - **Jira Integration**: "What's the status of PROJ-42?" or "Create a bug ticket in APP project for the login failure."
 
-### 5. Task Scheduling
+### 4. Task Scheduling
 Tell Ghost to do things in the future.
 - "Remind me to check server logs in 20 minutes."
 - "Every morning at 9am, check the weather."
 - **Manage Tasks:** Type `/tasks` to see pending jobs.
 
-### 6. Memory System
+### 5. Memory System
 Ghost has a persistent memory.
 - **Short-term**: Remembers the current conversation.
 - **Long-term**: Stores facts in `brain/MEMORY.md`.
 - **User Profile**: Learns your preferences in `brain/USER.md`.
 
-### 7. Voice Mode
+### 6. Voice Mode
 Ghost integrates native Speech-to-Text and Text-to-Speech using cloud APIs (Google, OpenAI, Groq, Mistral, xAI).
 - **Activate**: Click the "🎙️ Speak" button in the TUI toolbar OR press `Ctrl+V` on your keyboard anywhere in the app to record for 5 seconds.
 - **Auto-Speak**: Toggle the "Auto-Speak" switch on the toolbar to have Ghost narrate its responses.
