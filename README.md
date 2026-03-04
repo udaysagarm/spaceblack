@@ -7,6 +7,7 @@
   </p>
 
   <p>
+    <a href="https://spaceblack.info"><img src="https://img.shields.io/badge/Website-spaceblack.info-blueviolet?style=for-the-badge" alt="Website"></a>
     <a href="https://github.com/udaysagarm/SpaceBlack/releases/latest"><img src="https://img.shields.io/github/v/release/udaysagarm/SpaceBlack?style=for-the-badge&color=00ff00" alt="Version 1.0.0"></a>
     <img src="https://img.shields.io/badge/Python-3.10+-blue?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.10+">
     <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License MIT">
