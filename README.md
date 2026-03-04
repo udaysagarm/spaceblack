@@ -1,101 +1,114 @@
-# Space Black (Infrastructure) & Ghost (Agent)
+<div align="center">
 
-> **"Space Black is the ship. Ghost is the pilot."**
+  <h1>🌌 Space Black & 👻 Ghost</h1>
+  
+  <p>
+    <strong>Space Black is the ship. Ghost is the pilot.</strong>
+  </p>
 
-**Space Black** is a terminal-based AI infrastructure designed to host autonomous agents. It provides the **body** (CLI, file system access, browser engine, memory system) that an AI agent needs to live and work on your local machine.
+  <p>
+    <a href="https://github.com/udaysagarm/SpaceBlack/releases/latest"><img src="https://img.shields.io/github/v/release/udaysagarm/SpaceBlack?style=for-the-badge&color=00ff00" alt="Version 1.0.0"></a>
+    <img src="https://img.shields.io/badge/Python-3.10+-blue?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.10+">
+    <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License MIT">
+    <br>
+    <img src="https://img.shields.io/badge/macOS-000000?style=for-the-badge&logo=apple&logoColor=white" alt="macOS">
+    <img src="https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows">
+    <img src="https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black" alt="Linux">
+  </p>
+  
+  <img src="https://textual.textualize.io/assets/images/gallery/code_browser.png" alt="Terminal UI" width="800">
+</div>
 
-**Ghost** is the default AI agent running on Space Black. It is a self-evolving, persistent personality that acts as your pair programmer, researcher, and assistant.
+<br>
 
-![Terminal UI](https://textual.textualize.io/assets/images/gallery/code_browser.png)
+## 🚀 What is Space Black?
 
-## What is Space Black?
+**Space Black** is a terminal-based AI infrastructure designed to host autonomous agents. It provides the **body** (CLI, file system access, browser engine, encrypted memory) that an AI agent needs to live and work on your local machine.
 
-Space Black is the **Operating System for Agents**. It solves the hard problems of letting LLMs run locally:
-- **Massive Model Support**: Drop-down access to the absolute latest AI models (`gpt-4.5-preview`, `o1`, `gemini-2.5-flash`, `claude-3-7-sonnet`, `grok-2`, `deepseek-r1`, `llama-3.3`), encompassing OpenAI, Google, Anthropic, xAI, Groq, Mistral, and local Ollama.
-- **Terminal UI**: A beautiful, responsive TUI built with Textual, featuring dynamic dropdowns to prevent typos.
-- **Local Memory**: Long-term storage (`brain/`) for context, ensuring the agent "remembers" you.
-- **Tool System**: Safe file I/O, command execution, and system monitoring.
-- **Browser Engine**: A full Chromium-based autonomous browser wrapper.
+**Ghost** is the default AI agent running on Space Black. It is a self-evolving, persistent personality that acts as your pair programmer, researcher, and automated assistant. Let Ghost surf the web, read your code, and manage your tasks.
 
-## Who is Ghost?
+---
 
-Ghost is the **Agent** living inside.
-- **Identity**: Defines its own personality in `brain/SOUL.md`.
-- **Autonomy**: Can plan multi-step tasks (e.g., "Research this error, fix the code, run the tests").
-- **Browsing**: Uses the Space Black browser to surf the live web, read documentation, and interact with sites.
-- **Evolution**: Updates its own system prompt based on your feedback.
+## 🏗️ Tech Stack
 
-## Key Features
+Space Black leverages modern frameworks to run heavy agentic workloads natively:
 
-### 🧠 Persistent Memory
-Ghost remembers. It maintains a relationship with you, storing preferences and project details in `brain/USER.md` and semantic memories in `brain/memory/`.
+| Component | Technology | Description |
+|-----------|------------|-------------|
+| **Core** | **Python 3.10+** | Extensible infrastructure and native bindings. |
+| **Agent Mind** | **LangGraph / LangChain** | ReAct execution loops (Reason → Act → Observe). |
+| **Interface** | **Textual** | A beautiful, high-performance Terminal UI. |
+| **Browser Engine**| **Playwright & CDP** | Automates Chromium using Accessibility Trees for GUI vision. |
+| **Security** | **OS Keychain & AES-256**| Fuses native OS keychains with an encrypted local file vault. |
 
-### 🔐 Secure Vault System
-Ghost stores credentials securely prioritizing the native OS Keychain (macOS Keychain, Windows Credential Manager, Linux Secret Service), with an additional AES-encrypted local file vault fallback, ensuring API keys and passwords are never kept in plaintext.
+---
 
-### 🌐 Autonomous Web Browsing
-Ghost can surf the web like a human.
-- **Vision**: Sees page structure (Accessibility Tree), not just HTML soup.
-- **Interaction**: Clicks, types, scrolls, and navigates dynamic SPAs (React/Vue).
-- **Persistence**: Maintains cookies and sessions (stays logged in).
-[Read more about Browsing](docs/BROWSING.md)
+## ✨ Key Features & Modular Skills
 
-### ⚡ Background Daemon
-Run `ghost daemon` (or `ghost.bat daemon` on Windows) to let Ghost work tirelessly in the background. It polls `brain/HEARTBEAT.md` autonomously and executes scheduled cron jobs. Ghost can even message you proactively on Telegram or Slack when a job finishes.
+### 🧠 Persistent Mind & Security
+- **Memory**: Ghost maintains a relationship with you, storing preferences in `brain/USER.md` and semantic facts in `brain/memory/`.
+- **Vault System**: API keys and passwords are secure, prioritizing native OS Keychains over plaintext `config.json`.
+- **Self-Evolution**: Ghost dynamically updates its own core personality prompt (`brain/SOUL.md`).
 
-### 🎙️ Native Voice Integration
-Talk to Ghost naturally. Space Black integrates seamless Speech-to-Text and highly realistic Text-to-Speech directly in the TUI using cloud providers (OpenAI, Google, Groq, etc.). Fully compatible across macOS, Windows, Linux, and Raspberry Pi.
+### 🛠️ Capabilities & Integrations
+Space Black supports massive model variety (`gpt-4.5-preview`, `claude-3-7-sonnet`, `gemini-2.5-flash`, `deepseek-r1`) and provides Ghost with powerful tools:
 
-### 🛠️ Modular Skills
-Extend Ghost's capabilities with skills defined in `config.json`:
-- **Google Workspace**: Gmail, Calendar, Drive, Docs, and Sheets integration via local OAuth.
-- **macOS Control**: Deep integration with Apple Mail, Notes, Reminders, Finder, and Calendar via native AppleScript (macOS only).
-- **Discord & Slack**: Run background bots to manage servers, chat in channels, and access your personal gateway.
-- **GitHub**: Control repositories, issues, branches, and code files directly.
-- **Jira**: Manage tickets, comments, and project states autonomously via native Atlassian APIs.
-- **Stripe & PayPal**: Secure billing, invoices, payouts, and payments gateway.
-- **Telegram**: Chat with Ghost from your phone.
-- **Weather**: Real-time forecasts.
-- **Browser**: Full web access.
+<div align="center">
 
-*Currently sitting at a dense ~11,750+ lines of Python and infrastructure code, constantly evolving.*
+| Skill / Tool | Description |
+|---|---|
+| 🌐 **Autonomous Browser** | Surfs the live web, sees page structure natively, clicks, and navigates SPAs. |
+| 👔 **Google Workspace** | Reads Gmail, parses Drive docs, and manages Calendar events via local OAuth. |
+| 🍏 **macOS Control** | Deep native integration via AppleScript (Apple Mail, Notes, Reminders, Finder). |
+| 🐙 **GitHub** | Control repositories, fetch issues, manipulate branches, and direct code commits. |
+| 🎫 **Jira** | Natively manage Atlassian tickets, comments, and project states autonomously. |
+| 💳 **Stripe & PayPal** | Secure billing interactions, invoice generation, and payouts. |
+| 🗣️ **Native Voice** | Built-in seamless Speech-to-Text and auto Text-to-Speech (STT/TTS). |
+| 🤖 **Discord/Slack/Telegram**| Run background bots to manage servers and chat with Ghost remotely. |
 
-## Quick Start
+</div>
 
-### One-Line Install
+---
+
+## ⚡ Quick Start
+
+### Option 1: One-Line Install (macOS / Linux)
+The fastest way to get started. Automatically detects your OS and installs the `.deb`, `.rpm`, or compiles from source.
 ```bash
 curl -fsSL https://spaceblack.info/install.sh | bash
 ```
 
-> Also available via GitHub:
-> ```bash
-> curl -fsSL https://raw.githubusercontent.com/udaysagarm/SpaceBlack/main/install.sh | bash
-> ```
-
-### Manual Install
+### Option 2: Manual Clone (All Platforms)
 ```bash
 git clone https://github.com/udaysagarm/SpaceBlack.git
 cd SpaceBlack
+
+# Mac / Linux
 ./ghost start
+
+# Windows (PowerShell)
+.\ghost.bat start
 ```
 
-*First run auto-installs dependencies and launches the agent.*
+*The `ghost start` command automatically creates a virtual environment, installs dependencies, and launches the UI.*
 
-For all commands across macOS, Linux, Windows, and Raspberry Pi, see [**Commands**](docs/COMMANDS.md).
+---
 
-## Documentation
+## 📚 Documentation
 
-Space Black is documented extensively in the `docs/` directory:
+Dive deeper into the infrastructure and Agent mechanics inside the `docs/` folder:
 
--   [**Installation**](docs/INSTALLATION.md): All install methods (curl, source, .deb, .rpm).
--   [**Commands**](docs/COMMANDS.md): Full CLI reference for all platforms.
--   [**User Manual**](docs/USAGE.md): How to interact with Ghost.
--   [**Autonomous Browsing**](docs/BROWSING.md): Details on the browser engine.
--   [**Architecture**](docs/ARCHITECTURE.md): How Space Black works under the hood.
--   [**Tools**](docs/TOOLS.md): The toolset available to Ghost.
--   [**Packaging**](docs/PACKAGING.md): Building and distributing Linux packages.
--   [**Memory & Soul**](docs/MEMORY.md): How the agent's mind works.
--   [**Security**](docs/SECURITY.md): Privacy and data safety.
+| Guide | Description |
+|---|---|
+| [**CLI Commands**](docs/COMMANDS.md) | Full CLI reference (`ghost start`, `ghost daemon`, `ghost update`). |
+| [**User Manual**](docs/USAGE.md) | Interaction guide, Voice Mode shortcuts, and integration prompts. |
+| [**Installation**](docs/INSTALLATION.md) | Detailed requirements, advanced `.env` setup, and manual setups. |
+| [**Browsing**](docs/BROWSING.md) | How Ghost converts React/Vue DOM structures into readable Contexts. |
+| [**Architecture**](docs/ARCHITECTURE.md)| How Space Black's ReAct loop passes tools to the LangGraph runner. |
+| [**Packaging**](docs/PACKAGING.md) | Guide for compiling the `.deb` and `.rpm` native Linux packages. |
+| [**Security**](docs/SECURITY.md) | Details on AES vault encryption and token safety. |
 
-## License
-MIT License.
+---
+
+## 📄 License
+This project is licensed under the **[MIT License](LICENSE)**.
