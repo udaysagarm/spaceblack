@@ -3,14 +3,15 @@
 **Space Black** provides these tools to **Ghost** (the agent). Ghost uses them autonomously to complete your requests.
 
 ### 🔐 Vault (Secure Storage)
-Manage sensitive credentials, user specifics, and background data securely. The Vault prioritizes the host OS Native Password Storage system (macOS Keychain, Windows Credential Manager, Linux Secret Service), with an additional Local Encrypted File Vault (`secrets.enc`) as a fallback.
+Manage sensitive credentials securely. The Vault uses **AES encryption** (Fernet + PBKDF2) with a machine-local master key that auto-unlocks on each session — no passphrase needed.
 
-*   `initialize_local_vault(passphrase)`: Create a new encrypted local vault with a secret phrase.
-*   `unlock_local_vault(passphrase)`: Unlock the encrypted local vault for the current session.
-*   `lock_local_vault()`: Lock the encrypted local vault, clearing decryption keys from memory.
-*   `get_secret(key)`: Retrieve a securely stored string, checking OS Keyring first, then the local vault.
-*   `set_secret(key, value, store_in_local_vault=False)`: Save a string securely to the OS Keyring (default) or Local Vault.
-*   `list_secrets()`: See what keys are currently stored in the unlocked Local Vault (OS Keyring keys are hidden by default for security).
+*   `vault_act(action, key, value, category)`: Unified tool for all vault operations.
+    *   `action="get"`: Retrieve a secret by key.
+    *   `action="set"`: Store a secret with an optional category (`api_keys`, `passwords`, `tokens`, `oauth`, `general`).
+    *   `action="delete"`: Remove a secret by key.
+    *   `action="list"`: List all stored keys grouped by category (values hidden).
+    *   `action="status"`: Show vault health — file size, secret count, categories.
+
 
 ### 🌐 Autonomous Web Browsing
 Space Black gives Ghost a full headless browser to interact with the web.

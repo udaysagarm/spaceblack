@@ -11,6 +11,12 @@ venv/
 # Project Specific
 config.json
 
+# Secrets & Encryption (NEVER track these)
+**/secrets.json
+**/secrets.enc
+**/.vault_key
+*.key
+
 # Memory & Brain (Personal Data)
 brain/USER.md
 brain/SOUL.md

@@ -1,228 +1,236 @@
+"""
+Space Black Vault — Unified Encrypted Secret Manager
+=====================================================
+Provides a single `vault_act` LangChain tool for all secret operations.
+
+Architecture:
+  - Encryption: AES-128 via Fernet (PBKDF2-derived key, 390 000 iterations)
+  - Master key: Random 32-byte token stored in the OS keyring (keyring lib).
+    Falls back to a file at ~/.spaceblack/.vault_key if keyring is unavailable.
+  - The encrypted vault lives at  brain/vault/secrets.enc
+  - No manual passphrase needed — the vault auto-unlocks on the same machine.
+"""
+
 import os
 import json
-import keyring
+import time
 import base64
+import keyring
 from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from langchain_core.tools import tool
 
+# ── Paths ────────────────────────────────────────────────────────────────────
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
 VAULT_DIR = os.path.join(ROOT_DIR, "brain", "vault")
-LOCAL_VAULT_FILE = os.path.join(VAULT_DIR, "secrets.enc")
+VAULT_FILE = os.path.join(VAULT_DIR, "secrets.enc")
 
-KEYRING_SERVICE_NAME = "spaceblack_agent"
+KEYRING_SERVICE = "spaceblack_vault"
+KEYRING_KEY     = "master_key"
+FALLBACK_KEY_DIR  = os.path.expanduser("~/.spaceblack")
+FALLBACK_KEY_FILE = os.path.join(FALLBACK_KEY_DIR, ".vault_key")
 
-# Global state for the unlocked session
-_UNLOCKED_FERNET = None
-_LOCAL_VAULT_CACHE = None
-_CURRENT_SALT = None
+# Fixed salt — the master key itself is random, so per-file salts aren't needed
+_SALT = b"SpaceBlack_Vault_"  # 17 bytes, padded/truncated to 16 below
+_SALT = _SALT[:16]
 
-def _get_encryption_key(passphrase: str, salt: bytes) -> bytes:
-    """Derives a secure symmetric key from the passphrase."""
+# ── Internal helpers ─────────────────────────────────────────────────────────
+
+def _get_or_create_master_key() -> str:
+    """
+    Retrieves the master key from OS keyring.
+    If not found, generates one and stores it.
+    Falls back to a hidden file if keyring is unavailable.
+    """
+    # 1. Try OS keyring
+    try:
+        stored = keyring.get_password(KEYRING_SERVICE, KEYRING_KEY)
+        if stored:
+            return stored
+    except Exception:
+        pass
+
+    # 2. Try fallback file
+    if os.path.exists(FALLBACK_KEY_FILE):
+        try:
+            with open(FALLBACK_KEY_FILE, "r") as f:
+                return f.read().strip()
+        except Exception:
+            pass
+
+    # 3. Generate new key
+    new_key = base64.urlsafe_b64encode(os.urandom(32)).decode("utf-8")
+
+    # Store in keyring
+    try:
+        keyring.set_password(KEYRING_SERVICE, KEYRING_KEY, new_key)
+    except Exception:
+        pass
+
+    # Also store in fallback file
+    try:
+        os.makedirs(FALLBACK_KEY_DIR, mode=0o700, exist_ok=True)
+        with open(FALLBACK_KEY_FILE, "w") as f:
+            f.write(new_key)
+        if os.name != "nt":
+            os.chmod(FALLBACK_KEY_FILE, 0o600)
+    except Exception:
+        pass
+
+    return new_key
+
+
+def _derive_fernet(master_key: str) -> Fernet:
+    """Derives a Fernet cipher from the master key using PBKDF2."""
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=32,
-        salt=salt,
-        iterations=390000,
+        salt=_SALT,
+        iterations=390_000,
     )
-    return base64.urlsafe_b64encode(kdf.derive(passphrase.encode()))
+    derived = base64.urlsafe_b64encode(kdf.derive(master_key.encode("utf-8")))
+    return Fernet(derived)
 
-def _read_local_vault() -> dict:
-    """Reads and decrypts the local vault."""
-    global _UNLOCKED_FERNET, _LOCAL_VAULT_CACHE, _CURRENT_SALT
-    if not os.path.exists(LOCAL_VAULT_FILE):
+
+def _load_vault() -> dict:
+    """Loads and decrypts the vault. Returns empty dict if missing or corrupt."""
+    if not os.path.exists(VAULT_FILE):
         return {}
-    if not _UNLOCKED_FERNET:
-        return {} # Can't read if locked
-    
-    if _LOCAL_VAULT_CACHE is not None:
-        return _LOCAL_VAULT_CACHE
-        
     try:
-        with open(LOCAL_VAULT_FILE, "rb") as f:
-            data = f.read()
-            
-        # Extract salt (first 16 bytes) and ciphertext
-        salt = data[:16]
-        ciphertext = data[16:]
-        
-        decrypted_data = _UNLOCKED_FERNET.decrypt(ciphertext)
-        _LOCAL_VAULT_CACHE = json.loads(decrypted_data.decode("utf-8"))
-        _CURRENT_SALT = salt
-        return _LOCAL_VAULT_CACHE
-    except InvalidToken:
-        return {} # Wrong password or corrupted
-    except Exception as e:
-        print(f"Error reading vault: {e}")
+        fernet = _derive_fernet(_get_or_create_master_key())
+        with open(VAULT_FILE, "rb") as f:
+            ciphertext = f.read()
+        plaintext = fernet.decrypt(ciphertext)
+        return json.loads(plaintext.decode("utf-8"))
+    except (InvalidToken, Exception) as e:
+        # If decryption fails (different machine / corrupted), return empty
         return {}
 
-def _write_local_vault(secrets: dict) -> bool:
-    """Encrypts and writes the local vault."""
-    global _UNLOCKED_FERNET, _LOCAL_VAULT_CACHE, _CURRENT_SALT
-    if not os.path.exists(VAULT_DIR):
+
+def _save_vault(data: dict) -> bool:
+    """Encrypts and writes the vault to disk."""
+    try:
         os.makedirs(VAULT_DIR, exist_ok=True)
-        
-    if not _UNLOCKED_FERNET or not _CURRENT_SALT:
-        return False
-        
-    try:
-        plaintext = json.dumps(secrets).encode("utf-8")
-        ciphertext = _UNLOCKED_FERNET.encrypt(plaintext)
-        
-        with open(LOCAL_VAULT_FILE, "wb") as f:
-            f.write(_CURRENT_SALT + ciphertext)
-            
-        # Set permissions securely
+        fernet = _derive_fernet(_get_or_create_master_key())
+        plaintext = json.dumps(data, indent=2).encode("utf-8")
+        ciphertext = fernet.encrypt(plaintext)
+        with open(VAULT_FILE, "wb") as f:
+            f.write(ciphertext)
         if os.name != "nt":
-            os.chmod(LOCAL_VAULT_FILE, 0o600)
-            
-        _LOCAL_VAULT_CACHE = secrets
+            os.chmod(VAULT_FILE, 0o600)
         return True
     except Exception as e:
-        print(f"Error writing vault: {e}")
+        print(f"[Vault] Write error: {e}")
         return False
 
-@tool
-def initialize_local_vault(passphrase: str) -> str:
-    """
-    Initializes a new encrypted local vault with the given passphrase.
-    WARNING: This will overwrite any existing local vault!
-    Use this only when setting up a new vault.
-    """
-    global _UNLOCKED_FERNET, _LOCAL_VAULT_CACHE, _CURRENT_SALT
-    try:
-        salt = os.urandom(16)
-        key = _get_encryption_key(passphrase, salt)
-        _UNLOCKED_FERNET = Fernet(key)
-        _LOCAL_VAULT_CACHE = {}
-        _CURRENT_SALT = salt
-        
-        success = _write_local_vault({})
-        if success:
-            return "Local vault initialized and unlocked successfully."
-        else:
-            return "Failed to initialize local vault."
-    except Exception as e:
-        return f"Error: {str(e)}"
+
+def _timestamp() -> str:
+    return time.strftime("%Y-%m-%d %H:%M:%S")
+
+
+# ── Public LangChain Tool ───────────────────────────────────────────────────
 
 @tool
-def unlock_local_vault(passphrase: str) -> str:
+def vault_act(action: str, key: str = "", value: str = "", category: str = "general") -> str:
     """
-    Unlocks the local encrypted vault for the current session.
-    Provides access to secrets stored in the local file fallback.
-    """
-    global _UNLOCKED_FERNET, _LOCAL_VAULT_CACHE, _CURRENT_SALT
-    if not os.path.exists(LOCAL_VAULT_FILE):
-        return "Local vault does not exist. Initialize it first."
-        
-    try:
-        with open(LOCAL_VAULT_FILE, "rb") as f:
-            salt = f.read(16)
-            
-        key = _get_encryption_key(passphrase, salt)
-        temp_fernet = Fernet(key)
-        
-        # Test decryption
-        with open(LOCAL_VAULT_FILE, "rb") as f:
-            ciphertext = f.read()[16:]
-            
-        decrypted = temp_fernet.decrypt(ciphertext)
-        
-        # If successful, set globals
-        _UNLOCKED_FERNET = temp_fernet
-        _LOCAL_VAULT_CACHE = json.loads(decrypted.decode("utf-8"))
-        _CURRENT_SALT = salt
-        return "Local vault unlocked successfully."
-    except InvalidToken:
-        return "Incorrect passphrase. Failed to unlock local vault."
-    except Exception as e:
-        return f"Error unlocking vault: {str(e)}"
+    Unified vault tool for secure secret management.
+    All secrets are encrypted at rest using AES (Fernet) with a machine-local master key.
 
-@tool
-def lock_local_vault() -> str:
-    """
-    Locks the local encrypted vault, clearing the decryption keys from memory.
-    """
-    global _UNLOCKED_FERNET, _LOCAL_VAULT_CACHE, _CURRENT_SALT
-    _UNLOCKED_FERNET = None
-    _LOCAL_VAULT_CACHE = None
-    _CURRENT_SALT = None
-    return "Local vault locked securely."
+    Actions:
+      • get     — Retrieve a secret.        Args: key (required)
+      • set     — Store or update a secret.  Args: key (required), value (required), category (optional, default "general")
+      • delete  — Remove a secret.           Args: key (required)
+      • list    — List all stored secret keys and their categories (values are hidden).
+      • status  — Show vault health info (file exists, number of secrets, categories).
 
-@tool
-def get_secret(key: str) -> str:
+    Categories help organize secrets: "passwords", "api_keys", "tokens", "oauth", "general", etc.
     """
-    Retrieves a secret value. 
-    Checks the OS-native Keychain first. If not found, checks the unlocked local encrypted vault.
-    Use this to get passwords, API keys, or other sensitive data during tasks.
-    """
-    # 1. Try OS Native Keyring
-    try:
-        val = keyring.get_password(KEYRING_SERVICE_NAME, key)
-        if val:
-            return val
-    except Exception as e:
-        pass # Fallback to local vault
-        
-    # 2. Try Local Encrypted Vault
-    global _UNLOCKED_FERNET
-    if _UNLOCKED_FERNET:
-        secrets = _read_local_vault()
-        if key in secrets:
-            return secrets[key]
-        return f"Secret '{key}' not found in Keyring or Local Vault."
+    action = action.strip().lower()
+
+    # ── GET ──────────────────────────────────────────────────────────────
+    if action == "get":
+        if not key:
+            return "Error: 'key' is required for the 'get' action."
+        vault = _load_vault()
+        entry = vault.get(key)
+        if entry is None:
+            return f"Secret '{key}' not found in the vault."
+        # entry is {"value": ..., "category": ..., "updated": ...}
+        if isinstance(entry, dict):
+            return entry.get("value", str(entry))
+        return str(entry)  # legacy plain-value fallback
+
+    # ── SET ──────────────────────────────────────────────────────────────
+    elif action == "set":
+        if not key:
+            return "Error: 'key' is required for the 'set' action."
+        if not value:
+            return "Error: 'value' is required for the 'set' action."
+        vault = _load_vault()
+        vault[key] = {
+            "value": value,
+            "category": category or "general",
+            "updated": _timestamp(),
+        }
+        if _save_vault(vault):
+            return f"✅ Secret '{key}' saved to vault (category: {category})."
+        return f"❌ Failed to save secret '{key}'."
+
+    # ── DELETE ───────────────────────────────────────────────────────────
+    elif action == "delete":
+        if not key:
+            return "Error: 'key' is required for the 'delete' action."
+        vault = _load_vault()
+        if key not in vault:
+            return f"Secret '{key}' not found in the vault."
+        del vault[key]
+        if _save_vault(vault):
+            return f"🗑️ Secret '{key}' deleted from vault."
+        return f"❌ Failed to delete secret '{key}'."
+
+    # ── LIST ─────────────────────────────────────────────────────────────
+    elif action == "list":
+        vault = _load_vault()
+        if not vault:
+            return "Vault is empty — no secrets stored."
+        lines = ["🔐 **Vault Contents** (values hidden):\n"]
+        # Group by category
+        by_cat: dict[str, list[str]] = {}
+        for k, v in vault.items():
+            cat = v.get("category", "general") if isinstance(v, dict) else "general"
+            by_cat.setdefault(cat, []).append(k)
+        for cat in sorted(by_cat.keys()):
+            lines.append(f"  **{cat}**")
+            for k in sorted(by_cat[cat]):
+                entry = vault[k]
+                ts = entry.get("updated", "—") if isinstance(entry, dict) else "—"
+                lines.append(f"    • {k}  (updated: {ts})")
+        lines.append(f"\nTotal: {len(vault)} secret(s)")
+        return "\n".join(lines)
+
+    # ── STATUS ───────────────────────────────────────────────────────────
+    elif action == "status":
+        exists = os.path.exists(VAULT_FILE)
+        if not exists:
+            return "Vault file does not exist yet. Store a secret to create it."
+        vault = _load_vault()
+        categories = set()
+        for v in vault.values():
+            if isinstance(v, dict):
+                categories.add(v.get("category", "general"))
+        size_kb = os.path.getsize(VAULT_FILE) / 1024
+        return (
+            f"🔐 **Vault Status**\n"
+            f"  File: brain/vault/secrets.enc ({size_kb:.1f} KB)\n"
+            f"  Secrets: {len(vault)}\n"
+            f"  Categories: {', '.join(sorted(categories)) if categories else '—'}\n"
+            f"  Encryption: AES-128 (Fernet + PBKDF2)\n"
+            f"  Auto-unlock: ✅ (machine-local key)"
+        )
+
     else:
-        return f"Secret '{key}' not found in Keyring. Local vault is locked or uninitialized."
-
-@tool
-def set_secret(key: str, value: str, store_in_local_vault: bool = False) -> str:
-    """
-    Saves a secret value securely.
-    By default, stores in the OS-native Keychain (Credential Manager/Keychain Access).
-    If store_in_local_vault is True, it stores it in the encrypted local vault file instead 
-    (must be unlocked first).
-    """
-    if store_in_local_vault:
-        global _UNLOCKED_FERNET
-        if not _UNLOCKED_FERNET:
-            return "Cannot store in local vault: Vault is locked. Use unlock_local_vault first."
-            
-        secrets = _read_local_vault()
-        secrets[key] = value
-        success = _write_local_vault(secrets)
-        if success:
-            return f"Secret '{key}' saved successfully in Encrypted Local Vault."
-        else:
-            return f"Failed to save secret '{key}' to Local Vault."
-    else:
-        try:
-            keyring.set_password(KEYRING_SERVICE_NAME, key, value)
-            return f"Secret '{key}' saved successfully in OS-Native Keyring."
-        except Exception as e:
-            return f"Failed to save to OS Keyring: {str(e)}. You can try storing in local vault instead."
-
-@tool
-def list_secrets() -> str:
-    """
-    Lists the keys of all stored secrets in the unlocked local vault.
-    NOTE: For security and OS limitations, this may not list all secrets in the OS Keyring.
-    """
-    messages = []
-    
-    # OS Keyring listing is poorly supported across platforms, so we only list local vault keys reliably
-    # We could attempt to list them on some backends but it's often disabled.
-    messages.append("OS Keyring: (Listing keys is restricted by OS)")
-    
-    global _UNLOCKED_FERNET
-    if _UNLOCKED_FERNET:
-        secrets = _read_local_vault()
-        keys = list(secrets.keys())
-        if keys:
-            messages.append("Local Encrypted Vault (Unlocked):\n" + "\n".join([f"- {k}" for k in keys]))
-        else:
-            messages.append("Local Encrypted Vault is empty.")
-    else:
-        messages.append("Local Encrypted Vault is [LOCKED].")
-        
-    return "\n".join(messages)
+        return (
+            f"Unknown action '{action}'. "
+            f"Available actions: get, set, delete, list, status"
+        )

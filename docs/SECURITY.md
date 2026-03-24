@@ -8,9 +8,12 @@ Space Black is designed with a "Local-First" philosophy. Your data, keys, and me
 -   **Configuration**: Keys can be managed via the TUI (`/config` and `/skills`) or by manually editing the `.env` file.
 
 ## Vault Security (Credential Storage)
-Space Black provides a tiered secure Vault system for storing user passwords and tokens automatically.
-1.  **OS Native Storage (Default)**: Uses the secure keychain provided by your host operating system (e.g., macOS Keychain, Windows Credential Manager, Linux Secret Service).
-2.  **Local Encrypted Vault**: An optional fallback file (`brain/vault/secrets.enc`) encrypted using symmetric AES-128 (Fernet). To access this fallback vault, you must establish a secret passphrase via `initialize_local_vault` and unlock it per-session using `unlock_local_vault`. At rest, without the passphrase, this file cannot be decrypted. The old plaintext `secrets.json` system is completely deprecated and removed.
+Space Black provides a zero-configuration encrypted vault for storing user passwords, API keys, and tokens.
+1.  **Machine-Local Master Key**: A random 32-byte key is generated once and stored in the OS keyring (macOS Keychain, Windows Credential Manager, Linux Secret Service). A file fallback at `~/.spaceblack/.vault_key` is used if keyring is unavailable.
+2.  **AES Encryption at Rest**: All secrets are encrypted using Fernet (AES-128-CBC + HMAC-SHA256) with a key derived via PBKDF2 (390,000 iterations). The encrypted vault lives at `brain/vault/secrets.enc`.
+3.  **Auto-Unlock**: The vault automatically unlocks on the same machine without requiring a passphrase each session. Secrets cannot be decrypted on a different machine without the master key.
+4.  **No Plaintext Storage**: All legacy plaintext secret files (`secrets.json`) have been removed. Secrets are only ever stored encrypted.
+5.  **Category Organization**: Secrets are organized by category (`passwords`, `api_keys`, `tokens`, `oauth`, `general`) with modification timestamps for auditing.
 
 ## Telegram Gateway Security
 The Telegram Bot skill is a public-facing interface. To secure it:

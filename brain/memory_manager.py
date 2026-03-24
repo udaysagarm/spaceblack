@@ -222,12 +222,7 @@ This file lists the capabilities currently enabled for your Ghost Agent.
 -   **update_memory**: I can save important facts, events, and context to my long-term memory logs (`brain/memory/`).
 -   **update_user_profile**: I can learn and store structured information about you (preferences, tech stack) in `brain/USER.md`.
 -   **execute_terminal_command**: I can run shell commands (`ls`, `git status`, `cat file`). I should run read-only commands IMMEDIATELY without asking.
--   **get_secret**: I can securely retrieve secrets stored in the host OS Keyring or the Local Encrypted Vault.
--   **set_secret**: I can securely save a string to the OS Keyring (default) or Local Vault.
--   **list_secrets**: I can list keys stored in the unlocked Local Vault.
--   **initialize_local_vault**: I can create a new encrypted local file vault (`secrets.enc`) with a passphrase.
--   **unlock_local_vault**: I can unlock the local encrypted vault for this session.
--   **lock_local_vault**: I can lock the local encrypted vault.
+-   **vault_act**: Unified secure vault for storing and retrieving secrets (passwords, API keys, tokens). Actions: `get`, `set`, `delete`, `list`, `status`. Auto-encrypted at rest — no passphrase needed.
 
 ## Productivity & Search
 -   **schedule_task**: I can schedule reminders or command executions for a specific time in the future.
@@ -297,7 +292,13 @@ DEFAULT_SHIELD = """A security policy file that defines rules for threat detecti
 
 ## Tool Usage Constraints
 - No destructive commands without explicit confirmation.
-- No external network access unless creating a specific researched-based request."""
+- No external network access unless creating a specific researched-based request.
+
+## Vault Security
+- NEVER display or print secret values in chat, logs, or public channels.
+- When listing secrets, only show keys — never values.
+- Never store secrets in memory files (MEMORY.md, daily logs) or plain text files.
+- Use `vault_act(action="set", ...)` for ALL credential storage — never write secrets to config files or .env directly."""
 
 DEFAULT_MEMORY = """The main long-term, curated memory file. The agent updates this file with stable facts, user preferences, and important decisions that should persist across sessions.
 

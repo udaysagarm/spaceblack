@@ -48,7 +48,7 @@ Space Black leverages modern frameworks to run heavy agentic workloads natively:
 
 ### 🧠 Persistent Mind & Security
 - **Memory**: Ghost maintains a relationship with you, storing preferences in `brain/USER.md` and semantic facts in `brain/memory/`.
-- **Vault System**: API keys and passwords are secure, prioritizing native OS Keychains over plaintext `config.json`.
+- **Vault System**: Zero-config encrypted vault — passwords and API keys are AES-encrypted at rest with a machine-local key. No passphrase needed.
 - **Self-Evolution**: Ghost dynamically updates its own core personality prompt (`brain/SOUL.md`).
 
 ### 🛠️ Capabilities & Integrations
